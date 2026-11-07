@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#06101d">
+<title>JARVIS — Asistente personal</title>
+<style>
+:root{--cyan:#62eaff;--line:#2bbfe766;--panel:#071a29}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(ellipse at 50% 18%,#12385b 0,#071321 48%,#02060b 100%);color:#e8faff;font-family:system-ui,sans-serif;min-height:100vh}
+main{max-width:560px;margin:auto;padding:22px 16px calc(24px + env(safe-area-inset-bottom))}
+header{text-align:center;color:var(--cyan);font-size:11px;letter-spacing:.28em}
+h1{text-align:center;letter-spacing:.3em;font-size:30px;margin:7px 0 0;text-shadow:0 0 18px #25cfff}
+.tag{text-align:center;color:#9ab9ce;font-size:11px;letter-spacing:.14em}
+.orb{width:min(62vw,230px);aspect-ratio:1;margin:26px auto 20px;border-radius:50%;display:grid;place-items:center;position:relative;background:radial-gradient(circle,#0b2c46 0 33%,transparent 34%),repeating-radial-gradient(circle,transparent 0 42%,#39dfff77 43% 43.6%,transparent 44% 48%),conic-gradient(transparent,#42eaff,#1269b4,transparent,#42eaff,transparent);box-shadow:0 0 35px #13b9e755,inset 0 0 24px #19caff66;animation:rotate 20s linear infinite}
+.orb:before,.orb:after{content:"";position:absolute;inset:9%;border:1px solid #58eaff88;border-radius:50%;transform:rotateX(65deg)}
+.orb:after{inset:18%;transform:rotateY(65deg)}
+.orb span{font-size:11px;letter-spacing:.18em;color:#c4faff;animation:rotate 20s linear infinite reverse}
+@keyframes rotate{to{transform:rotate(360deg)}}
+.status{text-align:center;color:var(--cyan);font-size:11px;letter-spacing:.13em;margin-bottom:15px;min-height:18px}
+.panel{border:1px solid var(--line);background:#061522eF;border-radius:17px;padding:13px;box-shadow:0 0 24px #0aa4d51c}
+#chat{height:230px;overflow:auto;display:flex;flex-direction:column;gap:9px}
+.msg{padding:10px 12px;border-radius:12px;max-width:92%;font-size:14px;line-height:1.45;white-space:pre-wrap}
+.bot{align-self:flex-start;background:#10334a;border:1px solid #2bbce655}
+.user{align-self:flex-end;background:#124d70;border:1px solid #4bdfff66}
+.controls{display:flex;gap:7px;margin-top:11px}
+input{flex:1;min-width:0;background:#020b14;border:1px solid #287c9a;border-radius:11px;color:white;padding:12px;font-size:15px}
+button,select{border:1px solid #42dfff;background:#0c3850;color:#e7fbff;border-radius:11px;padding:11px;font-weight:650}
+button:active{transform:scale(.98)}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:9px}
+.actions button{width:100%}
+select{width:100%;margin-top:10px;font-weight:400}
+.note{font-size:11px;color:#91aabb;line-height:1.5;text-align:center;margin:13px 4px 0}
+</style>
+</head>
+<body>
+<main>
+<header>ASISTENTE PERSONAL</header>
+<h1>JARVIS</h1>
+<div class="tag">INTERFAZ DE ASISTENCIA • VERSIÓN INICIAL</div>
+<div class="orb"><span>J.A.R.V.I.S.</span></div>
+<div class="status" id="status">SISTEMA EN ESPERA</div>
+<section class="panel">
+<div id="chat" aria-live="polite">
+<div class="msg bot">Buenos días. Soy JARVIS, tu asistente personal. Puedo hablar en voz alta y reconocer voz si tu navegador lo permite. Mi conexión a una IA avanzada todavía no está configurada.</div>
+</div>
+<div class="controls">
+<input id="entry" placeholder="Escribe aquí..." autocomplete="off">
+<button id="send">Enviar</button>
+</div>
+<div class="actions">
+<button id="mic">🎙 Hablar</button>
+<button id="stop">■ Silenciar voz</button>
+</div>
+<select id="voice"><option value="">Voz del teléfono (predeterminada)</option></select>
+</section>
+<p class="note">Esta versión funciona como prototipo local. Las voces disponibles dependen de Android y Chrome. Para respuestas de IA reales hace falta conectar un servicio mediante un servidor seguro; no introduzcas claves secretas en esta página.</p>
+</main>
+<script>
+const chat=document.querySelector('#chat'),entry=document.querySelector('#entry'),status=document.querySelector('#status'),voiceSelect=document.querySelector('#voice');
+function add(text,who){const d=document.createElement('div');d.className='msg '+who;d.textContent=text;chat.appendChild(d);chat.scrollTop=chat.scrollHeight;}
+function speak(text){
+ if(!('speechSynthesis' in window)){status.textContent='VOZ NO DISPONIBLE';return;}
+ speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);u.lang='es-ES';u.rate=.94;u.pitch=.82;
+ const voices=speechSynthesis.getVoices();const selected=voiceSelect.value;
+ if(selected){const v=voices.find(x=>x.name===selected);if(v)u.voice=v;}
+ else{const v=voices.find(x=>/^es/i.test(x.lang)&&/male|masculino|andrés|jorge|diego/i.test(x.name))||voices.find(x=>/^es/i.test(x.lang));if(v)u.voice=v;}
+ u.onstart=()=>status.textContent='JARVIS RESPONDIENDO';u.onend=()=>status.textContent='SISTEMA EN ESPERA';speechSynthesis.speak(u);
+}
+function localReply(t){
+ const q=t.toLowerCase();
+ if(/hola|buenos días|buenas tardes|buenas noches/.test(q))return 'Saludos. Estoy en línea como prototipo. ¿En qué puedo ayudarte?';
+ if(/cómo te llamas|quién eres/.test(q))return 'Soy JARVIS, tu asistente personal.';
+ if(/hora/.test(q))return 'La hora de tu dispositivo es '+new Date().toLocaleTimeString('es',{hour:'2-digit',minute:'2-digit'})+'.';
+ if(/fecha|día es/.test(q))return 'Hoy es '+new Date().toLocaleDateString('es',{weekday:'long',year:'numeric',month:'long',day:'numeric'})+'.';
+ if(/gracias/.test(q))return 'Siempre a tu servicio.';
+ return 'He recibido tu mensaje. Para responder preguntas abiertas con inteligencia artificial real, todavía falta conectar el servicio de IA de forma segura.';
+}
+function send(){const t=entry.value.trim();if(!t)return;add(t,'user');entry.value='';const answer=localReply(t);add(answer,'bot');speak(answer);}
+document.querySelector('#send').addEventListener('click',send);entry.addEventListener('keydown',e=>{if(e.key==='Enter')send();});
+document.querySelector('#stop').addEventListener('click',()=>{if('speechSynthesis'in window)speechSynthesis.cancel();status.textContent='VOZ SILENCIADA';});
+function loadVoices(){if(!('speechSynthesis'in window))return;const vs=speechSynthesis.getVoices().filter(v=>/^es/i.test(v.lang));voiceSelect.innerHTML='<option value="">Voz en español (automática)</option>';vs.forEach(v=>{const o=document.createElement('option');o.value=v.name;o.textContent=v.name+' — '+v.lang;voiceSelect.appendChild(o);});}
+if('speechSynthesis'in window){loadVoices();speechSynthesis.onvoiceschanged=loadVoices;}
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+document.querySelector('#mic').addEventListener('click',()=>{if(!SR){status.textContent='RECONOCIMIENTO DE VOZ NO DISPONIBLE EN ESTE NAVEGADOR';return;}const r=new SR();r.lang='es-ES';r.interimResults=false;status.textContent='ESCUCHANDO...';r.onresult=e=>{entry.value=e.results[0][0].transcript;send();};r.onerror=()=>status.textContent='NO SE PUDO RECONOCER LA VOZ';r.onend=()=>{if(status.textContent==='ESCUCHANDO...')status.textContent='SISTEMA EN ESPERA';};r.start();});
+</script>
+</body></html>
